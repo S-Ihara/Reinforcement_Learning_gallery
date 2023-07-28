@@ -1,0 +1,9 @@
+torch
+torchvision
+tqdm
+matplotlib
+seaborn
+gymnasium
+gymnasium[other]
+gymnasium[atari]
+gymnasium[accept-rom-license] # atariのrom
