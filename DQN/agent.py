@@ -55,7 +55,7 @@ class DQNAgent:
         """
         return max(0.05,0.5-num_episode*0.02)
     
-    def get_action(self,state: np.ndArray,epsilon: float):
+    def get_action(self,state: np.ndarray,epsilon: float):
         """
         Args:
             state (np.ndArray): 現在の状態
@@ -102,7 +102,7 @@ class DQNAgent:
         loss.backward()
         self.optimizer.step()
     
-    def update_target_qnetwork(self):
+    def update_target_networks(self):
         self.target_Q.load_state_dict(self.Q.state_dict())
 
     def store_experience(self,state,action,reward,next_state,done):

@@ -4,10 +4,13 @@
 """
 import argparse
 from typing import Optional
+
+import numpy as np
+
+
 from utils import Configs
 from agent import DQNAgent
-
-from envs.classic_gym_env import make_classic_env
+from envs.atari_env import make_atari_env
 
 class Trainer:
     """
@@ -25,7 +28,7 @@ class Trainer:
         self.reward_history = []
         self.loss_history = []
 
-    def online_train(self,num_steps: Optional[int] ,num_episodes: int = 1000):
+    def online_train(self,num_steps: Optional[int]=None ,num_episodes: int = 1000):
         """訓練を行うメソッド
         Args:
             num_episodes int: 訓練するエピソード数
@@ -50,7 +53,7 @@ class Trainer:
                 next_state,reward,terminated,truncated,info = env.step(action) 
                 total_reward += reward
                 agent.store_experience(state,action,reward,next_state,truncated)
-                loss = agent.update_network()
+                loss = agent.update_networks()
                 self.loss_history.append(loss)
                 state = next_state
                 step += 1
@@ -58,9 +61,9 @@ class Trainer:
                     done = True
                     total_steps += step
 
-            agent.update_target_network()
+            agent.update_target_networks()
             self.reward_history.append(total_reward)
-            print(f"Episode: {episode}, Step: {step}, Total_Step; {total_steps} , Reward: {total_reward}")
+            print(f"Episode: {episode}, Step: {step}, Reward: {total_reward}, Total_Step; {total_steps}")
         agent.save_model()
         print("Training finished")
 
@@ -75,12 +78,24 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = Configs()
-    env = make_classic_env(config.env_name)
+    env = make_atari_env(config.env_name,size=84,gray=True)
 
     if args.test:
         # テストモード
         pass
     else:
         # 訓練モード
-
-        pass
+        obs_space = env.observation_space.shape
+        print(obs_space)
+        num_actions = env.action_space.n
+        agent = DQNAgent(
+            observation_space=obs_space,
+            num_actions=num_actions,
+            gamma=config.gamma,
+            lr=config.lr,
+            batch_size=config.batch_size,
+            min_experiences=config.min_experiences,
+            max_experiences=config.memory_size,
+        )
+        trainer = Trainer(env,agent)
+        trainer.online_train(num_episodes=config.num_episodes)
