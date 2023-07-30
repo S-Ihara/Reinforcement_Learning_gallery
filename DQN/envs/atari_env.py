@@ -18,15 +18,17 @@ def make_atari_env(env_name: str ,size: int = 84 , gray: bool = False):
 class TorchImgshapeWrapper(ObservationWrapper):
     """
     gymの環境の出力する画像のshapeをPytorchの形式に変換する
+    ついでにrangeを[0,1]に変換する
     """
     def __init__(self,env):
         super().__init__(env)
         self.observation_space = gym.spaces.Box(
             low=0,
-            high=255,
+            high=1,
             shape=(env.observation_space.shape[2],env.observation_space.shape[0],env.observation_space.shape[1]),
             dtype=env.observation_space.dtype,
         )
     
     def observation(self,observation):
+        observation = observation.astype('float32') / 255.0
         return observation.transpose(2,0,1)

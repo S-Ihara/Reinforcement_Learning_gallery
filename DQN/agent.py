@@ -93,6 +93,7 @@ class DQNAgent:
         if torch.cuda.is_available():
             actions = actions.to("cuda")
             states = states.to("cuda")
+            rewards = rewards.to("cuda")
             dones = dones.to("cuda")
         
         current_Q_values = self.Q(states).gather(1,actions.type(torch.int64))
