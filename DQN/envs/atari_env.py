@@ -10,7 +10,7 @@ def make_atari_env(env_name: str ,size: int = 84 , gray: bool = False):
         size: size of the screen
         gray: whether to convert the screen to grayscale
     """
-    env = gym.make(env_name)
+    env = gym.make(env_name,render_mode='rgb_array')
     env = AtariPreprocessing(env,frame_skip=1 ,screen_size=size, grayscale_obs=gray, grayscale_newaxis=gray)
     env = TorchImgshapeWrapper(env)
     return env

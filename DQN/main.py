@@ -6,7 +6,7 @@ import argparse
 from typing import Optional
 
 import numpy as np
-
+from gymnasium.wrappers import RecordVideo
 
 from utils import Configs
 from agent import DQNAgent
@@ -67,8 +67,28 @@ class Trainer:
         agent.save_model()
         print("Training finished")
 
-    def test(self):
-        pass
+    def test(self,num_episodes: int = 1):
+        """テストを行うメソッド
+        Args:
+            num_episodes int: テストするエピソード数
+        """
+        env = self.env
+        agent = self.agent
+        total_steps = 0
+        for episode in range(1,num_episodes+1):
+            state,_ = env.reset()
+            total_reward = 0
+            step = 0
+            done = False
+            while not done:
+                action = agent.get_action(state,0)
+                next_state,reward,terminated,truncated,info = env.step(action) 
+                total_reward += reward
+                state = next_state
+                step += 1
+                if terminated or truncated:
+                    done = True
+                    total_steps += step
 
 
 if __name__ == "__main__":
@@ -82,11 +102,19 @@ if __name__ == "__main__":
 
     if args.test:
         # テストモード
-        pass
+        env = RecordVideo(env,video_folder="video",episode_trigger=lambda x: True)
+        obs_space = env.observation_space.shape
+        num_actions = env.action_space.n
+        agent = DQNAgent(
+            observation_space=obs_space,
+            num_actions=num_actions,
+        )
+        agent.load_model()
+        trainer = Trainer(env,agent)
+        trainer.test()
     else:
         # 訓練モード
         obs_space = env.observation_space.shape
-        print(obs_space)
         num_actions = env.action_space.n
         agent = DQNAgent(
             observation_space=obs_space,
