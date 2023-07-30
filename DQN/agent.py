@@ -39,6 +39,7 @@ class DQNAgent:
         if torch.cuda.is_available():
             self.Q = CNNQNet(observation_space,num_actions).to("cuda")
             self.target_Q = CNNQNet(observation_space,num_actions).to("cuda")
+            self.gamma = torch.tensor(gamma).to("cuda")
         else:
             self.Q = CNNQNet(observation_space,num_actions)
             self.target_Q = CNNQNet(observation_space,num_actions)
