@@ -36,8 +36,12 @@ class DQNAgent:
 
         # observation spaceの次元数でCNNかMLPかを判断したいなぁ
         # 上　これほんとぉ？
-        self.Q = CNNQNet(observation_space,num_actions)
-        self.target_Q = CNNQNet(observation_space,num_actions)
+        if torch.cuda.is_available():
+            self.Q = CNNQNet(observation_space,num_actions).to("cuda")
+            self.target_Q = CNNQNet(observation_space,num_actions).to("cuda")
+        else:
+            self.Q = CNNQNet(observation_space,num_actions)
+            self.target_Q = CNNQNet(observation_space,num_actions)
         
         self.replay_buffer = SimpleReplayBuffer(
             state_shape=observation_space,
