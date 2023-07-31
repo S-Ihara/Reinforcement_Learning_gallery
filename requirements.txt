@@ -8,3 +8,4 @@ gymnasium[other]
 gymnasium[classic-control]
 gymnasium[atari]
 gymnasium[accept-rom-license] # atariのrom
+minigrid

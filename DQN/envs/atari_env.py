@@ -1,3 +1,4 @@
+import numpy as np
 import gymnasium as gym
 from gymnasium import ObservationWrapper
 from gymnasium.wrappers import AtariPreprocessing
@@ -26,7 +27,7 @@ class TorchImgshapeWrapper(ObservationWrapper):
             low=0,
             high=1,
             shape=(env.observation_space.shape[2],env.observation_space.shape[0],env.observation_space.shape[1]),
-            dtype=env.observation_space.dtype,
+            dtype=np.float32,
         )
     
     def observation(self,observation):
