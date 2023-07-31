@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torchvision
 
 devices = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -59,3 +60,36 @@ class CNNQNet(torch.nn.Module):
 
     def conv2d_size_out(self,size,kernel_size,stride):
         return (size - (kernel_size - 1) - 1) // stride  + 1
+    
+
+class ResnetQNet(torch.nn.Module):
+    def __init__(self,observation_space: tuple[int,int,int],num_actions: int, train_resnet: bool = False):
+        """観測が画像で行動が離散値のQ関数
+        Args:
+            observation_space (tuple[int,int,int]): 入力の次元数 (channel,height,width)
+            num_actions (int): 行動の種類数
+            train_resnet (bool): resnetの学習を行うかどうか
+        """
+        super(ResnetQNet,self).__init__()
+        assert observation_space[1] == observation_space[2], "画像は正方形にしか対応していません"
+        self.feature_extractor = torchvision.models.resnet18(weights='IMAGENET1K_V1')
+        in_features = self.feature_extractor.fc.in_features
+        self.feature_extractor.fc = nn.Identity()
+        self.head = nn.Sequential(
+            nn.Linear(in_features,num_actions)
+        )
+        self.train_resnet = train_resnet
+
+    def forward(self,x):
+        x = x.to(devices)
+        # imagenet normailization
+        x = x * torch.tensor([0.229, 0.224, 0.225]).view(3,1,1).to(devices)
+        x = x + torch.tensor([0.485, 0.456, 0.406]).view(3,1,1).to(devices)
+        if self.train_resnet:
+            with torch.no_grad():
+                x = self.feature_extractor(x)
+        else:
+            x = self.feature_extractor(x)
+        x = x.view(x.size(0),-1)
+        x = self.head(x)
+        return x

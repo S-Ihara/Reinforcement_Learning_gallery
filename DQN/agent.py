@@ -2,7 +2,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from modules.models import CNNQNet
+from modules.models import CNNQNet, ResnetQNet
 from buffer import SimpleReplayBuffer
 
 class DQNAgent:
@@ -36,13 +36,20 @@ class DQNAgent:
 
         # observation spaceの次元数でCNNかMLPかを判断したいなぁ
         # 上　これほんとぉ？
+        # if torch.cuda.is_available():
+        #     self.Q = CNNQNet(observation_space,num_actions).to("cuda")
+        #     self.target_Q = CNNQNet(observation_space,num_actions).to("cuda")
+        #     self.gamma = torch.tensor(gamma).to("cuda")
+        # else:
+        #     self.Q = CNNQNet(observation_space,num_actions)
+        #     self.target_Q = CNNQNet(observation_space,num_actions)
         if torch.cuda.is_available():
-            self.Q = CNNQNet(observation_space,num_actions).to("cuda")
-            self.target_Q = CNNQNet(observation_space,num_actions).to("cuda")
+            self.Q = ResnetQNet(observation_space,num_actions).to("cuda")
+            self.target_Q = ResnetQNet(observation_space,num_actions).to("cuda")
             self.gamma = torch.tensor(gamma).to("cuda")
         else:
-            self.Q = CNNQNet(observation_space,num_actions)
-            self.target_Q = CNNQNet(observation_space,num_actions)
+            self.Q = ResnetQNet(observation_space,num_actions)
+            self.target_Q = ResnetQNet(observation_space,num_actions)
         
         self.replay_buffer = SimpleReplayBuffer(
             state_shape=observation_space,

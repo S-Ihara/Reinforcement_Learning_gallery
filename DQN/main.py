@@ -1,6 +1,8 @@
 """
 実行ファイル
 学習もテストもここから行う
+# TODO
+- makeenv一括でenv呼び出せるようにする
 """
 import argparse
 from typing import Optional
@@ -10,6 +12,7 @@ from gymnasium.wrappers import RecordVideo
 
 from utils import Configs
 from agent import DQNAgent
+from envs.minigrid_env import make_minigrid_env
 from envs.atari_env import make_atari_env
 
 class Trainer:
@@ -98,7 +101,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = Configs()
-    env = make_atari_env(config.env_name,size=84,gray=True)
+    #env = make_atari_env(config.env_name,size=84,gray=True)
+    env = make_minigrid_env(config.env_name)
 
     if args.test:
         # テストモード
