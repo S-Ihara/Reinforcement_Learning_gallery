@@ -121,7 +121,7 @@ class DQNAgent:
     def store_experience(self,state,action,reward,next_state,done):
         self.replay_buffer.store(state,action,reward,next_state,done)
     
-    def save_model(self,path: Path=Path("models")):
+    def save_model(self,path: Path=Path("weights")):
         """
         Args:
             path (Path): 保存先のパス
@@ -132,11 +132,14 @@ class DQNAgent:
         torch.save(self.Q.state_dict(),path)
         print(f"models is saved in {path}")
 
-    def load_model(self,path: Path=Path("models")):
+    def load_model(self,path: Path=Path("weights")):
         """
         Args:
             path (Path): 保存先のパス
         """
         path = Path(path,"q.pth")
-        self.Q.load_state_dict(torch.load(path))
+        if torch.cuda.is_available():
+            self.Q.load_state_dict(torch.load(path,map_location=torch.device("cuda")))
+        else:
+            self.Q.load_state_dict(torch.load(path,map_location=torch.device("cpu")))
         print("model is loaded")
