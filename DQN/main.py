@@ -5,6 +5,7 @@
 - makeenv一括でenv呼び出せるようにする
 """
 import argparse
+from collections import deque
 from typing import Optional
 
 import numpy as np
@@ -12,8 +13,7 @@ from gymnasium.wrappers import RecordVideo
 
 from utils import Configs
 from agent import DQNAgent
-from envs.minigrid_env import make_minigrid_env
-from envs.atari_env import make_atari_env
+from envs import create_env
 
 class Trainer:
     """
@@ -31,11 +31,12 @@ class Trainer:
         self.reward_history = []
         self.loss_history = []
 
-    def online_train(self,num_steps: Optional[int]=None ,num_episodes: int = 1000):
+    def online_train(self,num_steps: Optional[int]=None ,num_episodes: int = 1000, frame_stack: int = 1):
         """訓練を行うメソッド
         Args:
             num_episodes int: 訓練するエピソード数
             num_steps int: 訓練するステップ数(Noneの場合は無視され、intの場合はnum_episodesより優先される)
+            frame_stack int: フレームスタック数
         """
         env = self.env
         agent = self.agent
@@ -47,6 +48,8 @@ class Trainer:
 
         for episode in range(1,num_episodes+1):
             state,_ = env.reset()
+            frames = deque([state]*frame_stack,maxlen=frame_stack)
+            state = np.stack(frames,axis=1).reshape(-1,*state.shape[1:3])
             epsilon = agent.get_epsilon(episode)
             total_reward = 0
             step = 0
@@ -54,6 +57,8 @@ class Trainer:
             while not done:
                 action = agent.get_action(state,epsilon)
                 next_state,reward,terminated,truncated,info = env.step(action) 
+                frames.append(next_state)
+                next_state = np.stack(frames,axis=1).reshape(-1,*next_state.shape[1:3])
                 total_reward += reward
                 agent.store_experience(state,action,reward,next_state,truncated)
                 loss = agent.update_networks()
@@ -103,13 +108,15 @@ if __name__ == "__main__":
 
     config = Configs()
     #env = make_atari_env(config.env_name,size=84,gray=True)
-    env = make_minigrid_env(config.env_name)
+    #env = make_minigrid_env(config.env_name)
+    env = create_env(env_name=config.env_name,tile_size=16)
+    obs_space = env.observation_space.shape
+    obs_space[0] = obs_space[0] * config.frame_stack
+    num_actions = env.action_space.n
 
     if args.test:
         # テストモード
         env = RecordVideo(env,video_folder="video",episode_trigger=lambda x: True)
-        obs_space = env.observation_space.shape
-        num_actions = env.action_space.n
         agent = DQNAgent(
             observation_space=obs_space,
             num_actions=num_actions,
@@ -119,8 +126,6 @@ if __name__ == "__main__":
         trainer.test(num_episodes=5)
     else:
         # 訓練モード
-        obs_space = env.observation_space.shape
-        num_actions = env.action_space.n
         agent = DQNAgent(
             observation_space=obs_space,
             num_actions=num_actions,
