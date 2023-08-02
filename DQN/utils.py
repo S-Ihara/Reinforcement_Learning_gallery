@@ -4,7 +4,7 @@ class Configs(NamedTuple):
     """
     ハイパーパラメータ
     """
-    env_name: str = "MiniGrid-Empty-Random-6x6-v0"
+    env_name: str = "Breakout-v4"
     frame_stack: int = 3
     gray: bool = True
     gamma: float = 0.99

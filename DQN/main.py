@@ -110,8 +110,9 @@ if __name__ == "__main__":
     #env = make_atari_env(config.env_name,size=84,gray=True)
     #env = make_minigrid_env(config.env_name)
     env = create_env(env_name=config.env_name,tile_size=16)
-    obs_space = env.observation_space.shape
+    obs_space = list(env.observation_space.shape)
     obs_space[0] = obs_space[0] * config.frame_stack
+    obs_space = tuple(obs_space)
     num_actions = env.action_space.n
 
     if args.test:
