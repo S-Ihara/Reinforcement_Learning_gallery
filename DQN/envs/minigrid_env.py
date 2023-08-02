@@ -15,7 +15,7 @@ from minigrid.wrappers import RGBImgObsWrapper
 
 def make_minigrid_env(env_name: str, obs_mode: str = 'rgb'):
     env = gym.make(env_name,render_mode='rgb_array')
-    env = RGBImgObsWrapper(env)
+    env = RGBImgObsWrapper(env,tile_size=16)
     env = OnlyImageReturnWrapper(env)
     return env
 
