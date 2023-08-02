@@ -4,13 +4,16 @@ from gymnasium import ObservationWrapper
 from gymnasium.wrappers import AtariPreprocessing
 
 
-def make_atari_env(env_name: str ,size: int = 84 , gray: bool = False):
+def make_atari_env(env_name: str , **kwargs):
     """
     Args:
         env_name: name of the environment
         size: size of the screen
         gray: whether to convert the screen to grayscale
     """
+    size = kwargs.get("size", 84)
+    gray = kwargs.get("gray", True)
+
     env = gym.make(env_name,render_mode='rgb_array')
     env = AtariPreprocessing(env,frame_skip=1 ,screen_size=size, grayscale_obs=gray, grayscale_newaxis=gray)
     env = TorchImgshapeWrapper(env)

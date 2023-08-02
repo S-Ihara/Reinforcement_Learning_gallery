@@ -3,7 +3,7 @@ import gymnasium as gym
 
 # LunarLander-v2
 
-def make_classic_env(env_name: str, obs_mode: str = 'classic'):
+def make_classic_env(env_name: str, **kwargs):
     """
     Args:
         env_name: name of the environment

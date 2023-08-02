@@ -13,9 +13,15 @@ import gymnasium as gym
 from gymnasium import ObservationWrapper
 from minigrid.wrappers import RGBImgObsWrapper
 
-def make_minigrid_env(env_name: str, obs_mode: str = 'rgb'):
+def make_minigrid_env(env_name: str, **kwargs):
+    """
+    Args:
+        env_name: name of the environment
+        tile_size: size of one of tile
+    """
+    tile_size = kwargs.get("tile_size", 8)
     env = gym.make(env_name,render_mode='rgb_array')
-    env = RGBImgObsWrapper(env,tile_size=16)
+    env = RGBImgObsWrapper(env,tile_size=tile_size)
     env = OnlyImageReturnWrapper(env)
     return env
 
