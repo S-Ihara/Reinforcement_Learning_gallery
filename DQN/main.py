@@ -92,6 +92,7 @@ class Trainer:
                 if terminated or truncated:
                     done = True
                     total_steps += step
+            print(f"episode: {episode}, step: {step}, reward: {total_reward}")
 
 
 if __name__ == "__main__":
@@ -115,7 +116,7 @@ if __name__ == "__main__":
         )
         agent.load_model()
         trainer = Trainer(env,agent)
-        trainer.test()
+        trainer.test(num_episodes=5)
     else:
         # 訓練モード
         obs_space = env.observation_space.shape
