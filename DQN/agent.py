@@ -90,7 +90,7 @@ class DQNAgent:
             action = np.random.choice(self.num_actions)
         else:
             with torch.no_grad():
-                state = torch.tensor(state,dtype=torch.float).div_(255).unsqueeze(0) # TODO ここで255で割りたくない 画像入力か状態ベクトル入力かわからないので
+                state = torch.tensor(state,dtype=torch.float).unsqueeze(0)
                 action = torch.argmax(self.Q(state)).item()
         return action
 
@@ -104,7 +104,7 @@ class DQNAgent:
     
         states,actions,rewards,next_states,dones = self.replay_buffer.get_minibatch(self.batch_size)
 
-        states = torch.from_numpy(states) # TODO ここも255で割りたくない
+        states = torch.from_numpy(states)
         actions = torch.from_numpy(actions)
         rewards = torch.tensor(rewards)
         next_states = torch.from_numpy(next_states)

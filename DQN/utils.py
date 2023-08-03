@@ -1,18 +1,15 @@
-from typing import NamedTuple, Optional
+import random
+import numpy as np
+import torch
 
-class Configs(NamedTuple):
+def set_random_seed(seed: int = 42):
     """
-    ハイパーパラメータ
+    乱数シードを設定する関数
+    Args:
+        seed: 乱数シード
     """
-    env_name: str = "Breakout-v4"
-    frame_stack: int = 1
-    gray: bool = True
-    gamma: float = 0.96
-    lr: float = 4e-4
-    q_update_steps: int = 2
-    target_update_steps: int = 500
-    target_update_epochs: Optional[int] = None
-    batch_size: int = 16
-    min_experiences: int = 512
-    memory_size: int = 100000
-    num_episodes: int = 1000
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic=True

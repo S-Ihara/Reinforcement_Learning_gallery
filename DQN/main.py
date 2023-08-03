@@ -14,7 +14,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from gymnasium.wrappers import RecordVideo
 
-from utils import Configs
+import configs
+from configs import DefaultConfigs
+from utils import set_random_seed
 from agent import DQNAgent
 from envs import create_env
 
@@ -73,10 +75,14 @@ class Trainer:
             while not done:
                 action = agent.get_action(state,epsilon)
                 next_state,reward,terminated,truncated,info = env.step(action) 
+                #print("debug!")
+                #print(f"state: {state}, reward: {reward}, next_state: {next_state}, terminated: {terminated}, truncated: {truncated}")
+                #if terminated: # CartPole
+                #    reward = -1
                 frames.append(next_state)
                 next_state = np.stack(frames,axis=1).reshape(-1,*next_state.shape[1:3])
                 total_reward += reward
-                agent.store_experience(state,action,reward,next_state,truncated)
+                agent.store_experience(state,action,reward,next_state,terminated)
                 if total_steps % q_update_steps == 0:
                     loss = agent.update_networks()
                     self.loss_history.append(loss)
@@ -150,12 +156,13 @@ if __name__ == "__main__":
     # コマンドライン引数
     parser = argparse.ArgumentParser()
     parser.add_argument('--test', action='store_true', help='test mode')
-    parser.add_argument('-e','--env', type=str, default='Breakout-v4', help='env name')
+    parser.add_argument('-c','--config', type=str, default='DefaultConfigs', help='config file')
     args = parser.parse_args()
 
-    config = Configs(env_name=args.env)
-    #env = make_atari_env(config.env_name,size=84,gray=True)
-    #env = make_minigrid_env(config.env_name)
+    config = getattr(configs,args.config)()
+    print(f"current config: {config}")
+    set_random_seed(config.seed)
+
     env = create_env(env_name=config.env_name,tile_size=16)
     obs_space = list(env.observation_space.shape)
     obs_space[0] = obs_space[0] * config.frame_stack
