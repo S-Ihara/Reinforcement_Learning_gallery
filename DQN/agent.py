@@ -2,7 +2,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from modules.models import CNNQNet, ResnetQNet
+from modules.models import CNNQNet, ResnetQNet, SimpleQNet
 from buffer import SimpleReplayBuffer
 
 class DQNAgent:
@@ -36,20 +36,31 @@ class DQNAgent:
 
         # observation spaceの次元数でCNNかMLPかを判断したいなぁ
         # 上　これほんとぉ？
-        # if torch.cuda.is_available():
-        #     self.Q = CNNQNet(observation_space,num_actions).to("cuda")
-        #     self.target_Q = CNNQNet(observation_space,num_actions).to("cuda")
-        #     self.gamma = torch.tensor(gamma).to("cuda")
-        # else:
-        #     self.Q = CNNQNet(observation_space,num_actions)
-        #     self.target_Q = CNNQNet(observation_space,num_actions)
-        if torch.cuda.is_available():
-            self.Q = ResnetQNet(observation_space,num_actions).to("cuda")
-            self.target_Q = ResnetQNet(observation_space,num_actions).to("cuda")
-            self.gamma = torch.tensor(gamma).to("cuda")
+        if len(observation_space) == 3:
+            # if torch.cuda.is_available():
+            #     self.Q = CNNQNet(observation_space,num_actions).to("cuda")
+            #     self.target_Q = CNNQNet(observation_space,num_actions).to("cuda")
+            #     self.gamma = torch.tensor(gamma).to("cuda")
+            # else:
+            #     self.Q = CNNQNet(observation_space,num_actions)
+            #     self.target_Q = CNNQNet(observation_space,num_actions)
+            if torch.cuda.is_available():
+                self.Q = ResnetQNet(observation_space,num_actions).to("cuda")
+                self.target_Q = ResnetQNet(observation_space,num_actions).to("cuda")
+                self.gamma = torch.tensor(gamma).to("cuda")
+            else:
+                self.Q = ResnetQNet(observation_space,num_actions)
+                self.target_Q = ResnetQNet(observation_space,num_actions)
+        elif len(observation_space) == 1:
+            if torch.cuda.is_available():
+                self.Q = SimpleQNet(observation_space,num_actions).to("cuda")
+                self.target_Q = SimpleQNet(observation_space,num_actions).to("cuda")
+                self.gamma = torch.tensor(gamma).to("cuda")
+            else:
+                self.Q = SimpleQNet(observation_space,num_actions)
+                self.target_Q = SimpleQNet(observation_space,num_actions)
         else:
-            self.Q = ResnetQNet(observation_space,num_actions)
-            self.target_Q = ResnetQNet(observation_space,num_actions)
+            raise NotImplementedError("observation space must be 1 or 3 dimentional")
         
         self.replay_buffer = SimpleReplayBuffer(
             state_shape=observation_space,
@@ -85,9 +96,11 @@ class DQNAgent:
 
     def update_networks(self):
         """
+        Returns:
+            float: loss
         """
         if len(self.replay_buffer) < self.min_experiences:
-            return
+            return 0
     
         states,actions,rewards,next_states,dones = self.replay_buffer.get_minibatch(self.batch_size)
 
@@ -114,6 +127,8 @@ class DQNAgent:
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+
+        return loss.item()
     
     def update_target_networks(self):
         self.target_Q.load_state_dict(self.Q.state_dict())

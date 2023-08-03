@@ -7,8 +7,11 @@
 import argparse
 from collections import deque
 from typing import Optional
+from pathlib import Path
 
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 from gymnasium.wrappers import RecordVideo
 
 from utils import Configs
@@ -31,12 +34,23 @@ class Trainer:
         self.reward_history = []
         self.loss_history = []
 
-    def online_train(self,num_steps: Optional[int]=None ,num_episodes: int = 1000, frame_stack: int = 1):
+    def online_train(
+            self,
+            num_steps: Optional[int]=None,
+            num_episodes: int = 1000, 
+            frame_stack: int = 1,
+            q_update_steps: int = 1,
+            target_update_steps: int = 1000,
+            target_update_epochs: Optional[int] = None,
+        ):
         """訓練を行うメソッド
         Args:
             num_episodes int: 訓練するエピソード数
             num_steps int: 訓練するステップ数(Noneの場合は無視され、intの場合はnum_episodesより優先される)
             frame_stack int: フレームスタック数
+            q_update_steps int: Q関数の更新ステップ間隔数
+            target_update_steps int: ターゲットネットワークの更新ステップ間隔数
+            target_update_epochs int: ターゲットネットワークの更新エポック数(Noneの場合は無視されるが、intの場合はtarget_update_stepsより優先される)
         """
         env = self.env
         agent = self.agent
@@ -51,9 +65,11 @@ class Trainer:
             frames = deque([state]*frame_stack,maxlen=frame_stack)
             state = np.stack(frames,axis=1).reshape(-1,*state.shape[1:3])
             epsilon = agent.get_epsilon(episode)
+            episode_losses = []
             total_reward = 0
             step = 0
             done = False
+
             while not done:
                 action = agent.get_action(state,epsilon)
                 next_state,reward,terminated,truncated,info = env.step(action) 
@@ -61,19 +77,49 @@ class Trainer:
                 next_state = np.stack(frames,axis=1).reshape(-1,*next_state.shape[1:3])
                 total_reward += reward
                 agent.store_experience(state,action,reward,next_state,truncated)
-                loss = agent.update_networks()
-                self.loss_history.append(loss)
+                if total_steps % q_update_steps == 0:
+                    loss = agent.update_networks()
+                    self.loss_history.append(loss)
+                    episode_losses.append(loss)
+                if (target_update_epochs is None) and (total_steps % target_update_steps) == 0:
+                    agent.update_target_networks()
                 state = next_state
                 step += 1
                 if terminated or truncated:
                     done = True
                     total_steps += step
 
-            agent.update_target_networks()
+            if (target_update_epochs is not None) and (episode % target_update_epochs == 0):
+                agent.update_target_networks()
             self.reward_history.append(total_reward)
-            print(f"Episode: {episode}, Step: {step}, Reward: {total_reward}, Total_Step; {total_steps}")
+            if episode_losses == []:
+                episode_losses = 0
+            else:
+                episode_losses = np.mean(episode_losses)
+            print(f"Episode: {episode}, Step: {step}, Reward: {total_reward}, Total_Step: {total_steps}, loss_avg: {episode_losses}")
         agent.save_model()
         print("Training finished")
+    
+    def plot_history(self,save_path: Path = Path("./history")):
+        """報酬や損失の履歴をプロットするメソッド
+        Args:
+            save_path Path: 保存先のパス
+        """
+        if not save_path.exists():
+            save_path.mkdir(parents=True)
+        sns.set_style("darkgrid")
+        fig,ax = plt.subplots(1,1,figsize=(10,10))
+        ax.plot(self.reward_history)
+        ax.set_xlabel("Episode")
+        ax.set_ylabel("Reward")
+        plt.savefig(save_path/"reward_history.png")
+
+        fig,ax = plt.subplots(1,1,figsize=(10,10))
+        ax.plot(self.loss_history)
+        ax.set_xlabel("Step")
+        ax.set_ylabel("Loss")
+        plt.savefig(save_path/"loss_history.png")
+        
 
     def test(self,num_episodes: int = 1):
         """テストを行うメソッド
@@ -104,9 +150,10 @@ if __name__ == "__main__":
     # コマンドライン引数
     parser = argparse.ArgumentParser()
     parser.add_argument('--test', action='store_true', help='test mode')
+    parser.add_argument('-e','--env', type=str, default='Breakout-v4', help='env name')
     args = parser.parse_args()
 
-    config = Configs()
+    config = Configs(env_name=args.env)
     #env = make_atari_env(config.env_name,size=84,gray=True)
     #env = make_minigrid_env(config.env_name)
     env = create_env(env_name=config.env_name,tile_size=16)
@@ -137,4 +184,10 @@ if __name__ == "__main__":
             max_experiences=config.memory_size,
         )
         trainer = Trainer(env,agent)
-        trainer.online_train(num_episodes=config.num_episodes)
+        trainer.online_train(
+            num_episodes=config.num_episodes,
+            q_update_steps=config.q_update_steps,
+            target_update_steps=config.target_update_steps,
+            target_update_epochs=config.target_update_epochs,
+        )
+        trainer.plot_history()

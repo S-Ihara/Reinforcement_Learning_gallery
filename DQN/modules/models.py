@@ -13,15 +13,16 @@ class SimpleQNet(torch.nn.Module):
         """
         super(SimpleQNet,self).__init__()
         self.layers = torch.nn.Sequential(
-              torch.nn.Linear(observation_space,50),
-              torch.nn.ReLU(),
-              torch.nn.Linear(50,50),
-              torch.nn.ReLU(),
-              torch.nn.Linear(50,num_actions),
+              torch.nn.Linear(observation_space[0],100),
+              torch.nn.Tanh(),
+              torch.nn.Linear(100,100),
+              torch.nn.Tanh(),
+              torch.nn.Linear(100,num_actions),
         )
         ### TODO kernel initialize
 
     def forward(self,x):
+        x = x.to(devices)
         return self.layers(x)
 
 class CNNQNet(torch.nn.Module):
