@@ -163,7 +163,13 @@ if __name__ == "__main__":
     print(f"current config: {config}")
     set_random_seed(config.seed)
 
-    env = create_env(env_name=config.env_name,tile_size=16)
+
+    tile_size = getattr(config,"tile_size",8)
+    size = getattr(config,"size",84)
+    gray = getattr(config,"gray",False)
+    env = create_env(
+        env_name=config.env_name,tile_size=tile_size,size=size,gray=gray
+    )
     obs_space = list(env.observation_space.shape)
     obs_space[0] = obs_space[0] * config.frame_stack
     obs_space = tuple(obs_space)

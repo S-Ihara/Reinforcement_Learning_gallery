@@ -37,20 +37,20 @@ class DQNAgent:
         # observation spaceの次元数でCNNかMLPかを判断したいなぁ
         # 上　これほんとぉ？
         if len(observation_space) == 3:
-            # if torch.cuda.is_available():
-            #     self.Q = CNNQNet(observation_space,num_actions).to("cuda")
-            #     self.target_Q = CNNQNet(observation_space,num_actions).to("cuda")
-            #     self.gamma = torch.tensor(gamma).to("cuda")
-            # else:
-            #     self.Q = CNNQNet(observation_space,num_actions)
-            #     self.target_Q = CNNQNet(observation_space,num_actions)
             if torch.cuda.is_available():
-                self.Q = ResnetQNet(observation_space,num_actions).to("cuda")
-                self.target_Q = ResnetQNet(observation_space,num_actions).to("cuda")
+                self.Q = CNNQNet(observation_space,num_actions).to("cuda")
+                self.target_Q = CNNQNet(observation_space,num_actions).to("cuda")
                 self.gamma = torch.tensor(gamma).to("cuda")
             else:
-                self.Q = ResnetQNet(observation_space,num_actions)
-                self.target_Q = ResnetQNet(observation_space,num_actions)
+                self.Q = CNNQNet(observation_space,num_actions)
+                self.target_Q = CNNQNet(observation_space,num_actions)
+            # if torch.cuda.is_available():
+            #     self.Q = ResnetQNet(observation_space,num_actions).to("cuda")
+            #     self.target_Q = ResnetQNet(observation_space,num_actions).to("cuda")
+            #     self.gamma = torch.tensor(gamma).to("cuda")
+            # else:
+            #     self.Q = ResnetQNet(observation_space,num_actions)
+            #     self.target_Q = ResnetQNet(observation_space,num_actions)
         elif len(observation_space) == 1:
             if torch.cuda.is_available():
                 self.Q = SimpleQNet(observation_space,num_actions).to("cuda")
@@ -68,6 +68,8 @@ class DQNAgent:
             size=max_experiences,
         )
         self.optimizer = torch.optim.Adam(self.Q.parameters(),lr=lr)
+        #self.loss_fn = torch.nn.MSELoss()
+        self.loss_fn = torch.nn.HuberLoss()
 
     def get_epsilon(self,num_episode: int):
         """epsilon greedyに使うepsilonの算出
@@ -121,8 +123,9 @@ class DQNAgent:
         next_Q_values = ~dones * next_max_q
         target_Q_values = rewards + (self.gamma * next_Q_values)
 
-        loss = (target_Q_values - current_Q_values) ** 2
-        loss = torch.mean(loss)
+        #loss = (target_Q_values - current_Q_values) ** 2
+        #loss = torch.mean(loss)
+        loss = self.loss_fn(current_Q_values,target_Q_values)
 
         self.optimizer.zero_grad()
         loss.backward()
