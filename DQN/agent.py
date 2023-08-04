@@ -34,8 +34,6 @@ class DQNAgent:
         self.gamma = gamma
         self.lr = lr
 
-        # observation spaceの次元数でCNNかMLPかを判断したいなぁ
-        # 上　これほんとぉ？
         if len(observation_space) == 3:
             # if torch.cuda.is_available():
             #     self.Q = CNNQNet(observation_space,num_actions).to("cuda")
