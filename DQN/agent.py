@@ -68,8 +68,8 @@ class DQNAgent:
             size=max_experiences,
         )
         self.optimizer = torch.optim.Adam(self.Q.parameters(),lr=lr)
-        #self.loss_fn = torch.nn.MSELoss()
-        self.loss_fn = torch.nn.HuberLoss()
+        self.loss_fn = torch.nn.MSELoss()
+        #self.loss_fn = torch.nn.HuberLoss()
 
     def get_epsilon(self,num_episode: int):
         """epsilon greedyに使うepsilonの算出
@@ -126,6 +126,7 @@ class DQNAgent:
         #loss = (target_Q_values - current_Q_values) ** 2
         #loss = torch.mean(loss)
         loss = self.loss_fn(current_Q_values,target_Q_values)
+        loss = torch.clamp(loss,0,3) # loss clipping
 
         self.optimizer.zero_grad()
         loss.backward()

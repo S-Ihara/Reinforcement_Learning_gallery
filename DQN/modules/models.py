@@ -84,8 +84,8 @@ class ResnetQNet(torch.nn.Module):
     def forward(self,x):
         x = x.to(devices)
         # imagenet normailization
-        x = x * torch.tensor([0.229, 0.224, 0.225]).view(3,1,1).to(devices)
-        x = x + torch.tensor([0.485, 0.456, 0.406]).view(3,1,1).to(devices)
+        x = x - torch.tensor([0.485, 0.456, 0.406]).view(3,1,1).to(devices)
+        x = x / torch.tensor([0.229, 0.224, 0.225]).view(3,1,1).to(devices)
         if self.train_resnet:
             with torch.no_grad():
                 x = self.feature_extractor(x)
