@@ -1,8 +1,6 @@
 """
 実行ファイル
 学習もテストもここから行う
-# TODO
-- makeenv一括でenv呼び出せるようにする
 """
 import argparse
 from collections import deque
