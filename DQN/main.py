@@ -42,6 +42,7 @@ class Trainer:
             q_update_steps: int = 1,
             target_update_steps: int = 1000,
             target_update_epochs: Optional[int] = None,
+            reward_clip: bool = False,
         ):
         """訓練を行うメソッド
         Args:
@@ -51,6 +52,7 @@ class Trainer:
             q_update_steps int: Q関数の更新ステップ間隔数
             target_update_steps int: ターゲットネットワークの更新ステップ間隔数
             target_update_epochs int: ターゲットネットワークの更新エポック数(Noneの場合は無視されるが、intの場合はtarget_update_stepsより優先される)
+            reward_clip bool: 報酬のクリッピング(-1 ~ 1)を行うかどうか
         """
         env = self.env
         agent = self.agent
@@ -73,6 +75,8 @@ class Trainer:
             while not done:
                 action = agent.get_action(state,epsilon)
                 next_state,reward,terminated,truncated,info = env.step(action) 
+                if reward_clip:
+                    reward = np.clip(reward,-1,1)
                 #print("debug!")
                 #print(f"state: {state}, reward: {reward}, next_state: {next_state}, terminated: {terminated}, truncated: {truncated}")
                 #if terminated: # CartPole
@@ -161,10 +165,12 @@ if __name__ == "__main__":
     print(f"current config: {config}")
     set_random_seed(config.seed)
 
-
+    # optional parameters
     tile_size = getattr(config,"tile_size",8)
     size = getattr(config,"size",84)
     gray = getattr(config,"gray",False)
+    reward_clip = getattr(config,"reward_clip",False)
+
     env = create_env(
         env_name=config.env_name,tile_size=tile_size,size=size,gray=gray
     )
@@ -200,5 +206,6 @@ if __name__ == "__main__":
             q_update_steps=config.q_update_steps,
             target_update_steps=config.target_update_steps,
             target_update_epochs=config.target_update_epochs,
+            reward_clip=reward_clip,
         )
         trainer.plot_history()

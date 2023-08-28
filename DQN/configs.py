@@ -34,6 +34,21 @@ class CartPole(NamedTuple):
     num_episodes: int = 3000
     seed: int = 42
 
+class Acrobot(NamedTuple):
+    env_name: str = "Acrobot-v1"
+    frame_stack: int = 1
+    gamma: float = 0.95
+    lr: float = 4e-4
+    q_update_steps: int = 1
+    target_update_steps: int = 3000
+    target_update_epochs: Optional[int] = None
+    batch_size: int = 64
+    min_experiences: int = 1024
+    memory_size: int = 100000
+    num_episodes: int = 3000
+    seed: int = 42
+    reward_clip: bool = True
+
 class Atari(NamedTuple):
     env_name: str = "VideoPinball-v4"
     frame_stack: int = 3
@@ -46,8 +61,9 @@ class Atari(NamedTuple):
     batch_size: int = 512
     min_experiences: int = 2048
     memory_size: int = 300000
-    num_episodes: int = 3000
+    num_episodes: int = 500
     seed: int = 42
+    reward_clip: bool = True
 
 class Breakout(NamedTuple):
     env_name: str = "Breakout-v4"
