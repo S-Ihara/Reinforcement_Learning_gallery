@@ -89,8 +89,8 @@ class MiniGridEmpty(NamedTuple):
     q_update_steps: int = 1
     target_update_steps: int = 500
     target_update_epochs: Optional[int] = None
-    batch_size: int = 128
+    batch_size: int = 16
     min_experiences: int = 512
-    memory_size: int = 100000
-    num_episodes: int = 1000
+    memory_size: int = 30000
+    num_episodes: int = 3000
     seed: int = 42

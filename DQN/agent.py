@@ -35,20 +35,20 @@ class DQNAgent:
         self.lr = lr
 
         if len(observation_space) == 3:
-            # if torch.cuda.is_available():
-            #     self.Q = CNNQNet(observation_space,num_actions).to("cuda")
-            #     self.target_Q = CNNQNet(observation_space,num_actions).to("cuda")
-            #     self.gamma = torch.tensor(gamma).to("cuda")
-            # else:
-            #     self.Q = CNNQNet(observation_space,num_actions)
-            #     self.target_Q = CNNQNet(observation_space,num_actions)
             if torch.cuda.is_available():
-                self.Q = ResnetQNet(observation_space,num_actions).to("cuda")
-                self.target_Q = ResnetQNet(observation_space,num_actions).to("cuda")
+                self.Q = CNNQNet(observation_space,num_actions).to("cuda")
+                self.target_Q = CNNQNet(observation_space,num_actions).to("cuda")
                 self.gamma = torch.tensor(gamma).to("cuda")
             else:
-                self.Q = ResnetQNet(observation_space,num_actions)
-                self.target_Q = ResnetQNet(observation_space,num_actions)
+                self.Q = CNNQNet(observation_space,num_actions)
+                self.target_Q = CNNQNet(observation_space,num_actions)
+            # if torch.cuda.is_available():
+            #     self.Q = ResnetQNet(observation_space,num_actions).to("cuda")
+            #     self.target_Q = ResnetQNet(observation_space,num_actions).to("cuda")
+            #     self.gamma = torch.tensor(gamma).to("cuda")
+            # else:
+            #     self.Q = ResnetQNet(observation_space,num_actions)
+            #     self.target_Q = ResnetQNet(observation_space,num_actions)
         elif len(observation_space) == 1:
             if torch.cuda.is_available():
                 self.Q = SimpleQNet(observation_space,num_actions).to("cuda")
@@ -65,9 +65,9 @@ class DQNAgent:
             action_shape=1,
             size=max_experiences,
         )
-        self.optimizer = torch.optim.Adam(self.Q.parameters(),lr=lr)
-        self.loss_fn = torch.nn.MSELoss()
-        #self.loss_fn = torch.nn.HuberLoss()
+        self.optimizer = torch.optim.Adam(self.Q.parameters(),lr=lr,betas=(0.9,0.95))
+        #self.loss_fn = torch.nn.MSELoss()
+        self.loss_fn = torch.nn.HuberLoss()
 
     def get_epsilon(self,num_episode: int):
         """epsilon greedyに使うepsilonの算出
@@ -76,7 +76,8 @@ class DQNAgent:
         Returns:
             float: epsilon (0 <= epsilon <= 1)
         """
-        return max(0.05,0.5-num_episode*0.02)
+        return max(0.01,0.5-num_episode*0.01)
+        #return 0.1
     
     def get_action(self,state: np.ndarray,epsilon: float):
         """

@@ -27,7 +27,6 @@ class Trainer:
         Args:
             env: 自作ラッパーによる環境
             agent: エージェント
-        自作クラスなのでとりあえず型タイプはしない
         """
         self.env = env
         self.agent = agent
@@ -104,7 +103,7 @@ class Trainer:
                 episode_losses = 0
             else:
                 episode_losses = np.mean(episode_losses)
-            print(f"Episode: {episode}, Step: {step}, Reward: {total_reward}, Total_Step: {total_steps}, loss_avg: {episode_losses}")
+            print(f"Episode: {episode}, Total_Step: {total_steps}, Step: {step}, Reward: {total_reward}, loss_avg: {episode_losses}")
         agent.save_model()
         print("Training finished")
     
