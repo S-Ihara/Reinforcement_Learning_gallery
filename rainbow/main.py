@@ -15,7 +15,7 @@ from gymnasium.wrappers import RecordVideo
 import configs
 from configs import DefaultConfigs
 from utils import set_random_seed
-from agent import DQNAgent
+from agent import RainbowAgent
 from envs import create_env
 
 class Trainer:
@@ -27,6 +27,8 @@ class Trainer:
         Args:
             env: 自作ラッパーによる環境
             agent: エージェント
+        Memo:
+            frame stack どうせ訓練時にもテスト時にも同じ値で使うしinitで設定してもいいかも
         """
         self.env = env
         self.agent = agent
@@ -128,22 +130,27 @@ class Trainer:
         plt.savefig(save_path/"loss_history.png")
         
 
-    def test(self,num_episodes: int = 1):
+    def test(self,num_episodes: int = 1, frame_stack: int = 1,):
         """テストを行うメソッド
         Args:
             num_episodes int: テストするエピソード数
+            frame_stack int: フレームスタック数
         """
         env = self.env
         agent = self.agent
         total_steps = 0
         for episode in range(1,num_episodes+1):
             state,_ = env.reset()
+            frames = deque([state]*frame_stack,maxlen=frame_stack)
+            state = np.stack(frames,axis=1).reshape(-1,*state.shape[1:3])
             total_reward = 0
             step = 0
             done = False
             while not done:
                 action = agent.get_action(state,0)
                 next_state,reward,terminated,truncated,info = env.step(action) 
+                frames.append(next_state)
+                next_state = np.stack(frames,axis=1).reshape(-1,*next_state.shape[1:3])
                 total_reward += reward
                 state = next_state
                 step += 1
@@ -169,6 +176,7 @@ if __name__ == "__main__":
     size = getattr(config,"size",84)
     gray = getattr(config,"gray",False)
     reward_clip = getattr(config,"reward_clip",False)
+    frame_stack = getattr(config,"frame_stack",1)
 
     env = create_env(
         env_name=config.env_name,tile_size=tile_size,size=size,gray=gray
@@ -178,19 +186,23 @@ if __name__ == "__main__":
     obs_space = tuple(obs_space)
     num_actions = env.action_space.n
 
+    # rainbow settings
+    double = getattr(config,"double",False)
+
     if args.test:
         # テストモード
         env = RecordVideo(env,video_folder="video",episode_trigger=lambda x: True)
-        agent = DQNAgent(
+        agent = RainbowAgent(
             observation_space=obs_space,
             num_actions=num_actions,
+            double=double,
         )
         agent.load_model()
         trainer = Trainer(env,agent)
-        trainer.test(num_episodes=5)
+        trainer.test(num_episodes=5,frame_stack=frame_stack)
     else:
         # 訓練モード
-        agent = DQNAgent(
+        agent = RainbowAgent(
             observation_space=obs_space,
             num_actions=num_actions,
             gamma=config.gamma,
@@ -198,6 +210,7 @@ if __name__ == "__main__":
             batch_size=config.batch_size,
             min_experiences=config.min_experiences,
             max_experiences=config.memory_size,
+            double=double,
         )
         trainer = Trainer(env,agent)
         trainer.online_train(
@@ -206,5 +219,6 @@ if __name__ == "__main__":
             target_update_steps=config.target_update_steps,
             target_update_epochs=config.target_update_epochs,
             reward_clip=reward_clip,
+            frame_stack=frame_stack,
         )
         trainer.plot_history()

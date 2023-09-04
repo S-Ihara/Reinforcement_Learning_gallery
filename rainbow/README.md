@@ -1,3 +1,13 @@
 # Deep Q-Networks (DQN)
-pytorchによるDQNの実装
+pytorchによるrainbowの実装
+
+とりあえず簡単なところから実装したり試したりする
+
+## TODO
+- [ ] multi step
+- [ ] double
+- [ ] dueling
+- [ ] noisy
+- [ ] categorical
+- [ ] prioritized
 

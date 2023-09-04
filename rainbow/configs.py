@@ -17,6 +17,8 @@ class DefaultConfigs(NamedTuple):
     memory_size: int = 100000
     num_episodes: int = 3000
     seed: int = 42
+    # 以下rainbow用のフラグ
+    double: bool = True
 
 class CartPole(NamedTuple):
     """CartPole-v1
@@ -50,7 +52,7 @@ class Acrobot(NamedTuple):
     reward_clip: bool = True
 
 class Atari(NamedTuple):
-    env_name: str = "VideoPinball-v4"
+    env_name: str = "Breakout-v4"
     frame_stack: int = 3
     gray: bool = True
     gamma: float = 0.99
@@ -61,9 +63,10 @@ class Atari(NamedTuple):
     batch_size: int = 512
     min_experiences: int = 2048
     memory_size: int = 300000
-    num_episodes: int = 500
+    num_episodes: int = 1000
     seed: int = 42
     reward_clip: bool = True
+    double: bool = True
 
 class Breakout(NamedTuple):
     env_name: str = "Breakout-v4"

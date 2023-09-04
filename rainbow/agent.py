@@ -5,7 +5,7 @@ import torch
 from modules.models import CNNQNet, ResnetQNet, SimpleQNet
 from buffer import SimpleReplayBuffer
 
-class DQNAgent:
+class RainbowAgent:
     def __init__(
             self,
             observation_space: tuple,
@@ -15,14 +15,17 @@ class DQNAgent:
             min_experiences: int = 500,
             batch_size: int = 64,
             lr: float = 3e-4,
+            double: bool = True,
         ):
         """
+        本家そのままではないがいくつかのRainbowでの工夫などを取り入れたエージェント
         Args:
             gamma (float): 割引率
             max_experiences (int): リプレイバッファの最大数
             min_experiences (int): 学習を始めるのに必要な最低限のバッファのサイズ
             batch_size (int): 学習のミニバッチサイズ
             lr (float): 学習立
+            double (bool): double q learningを使用するかどうか
         TODO:
             optim周りのパラメータなど
         """
@@ -33,6 +36,10 @@ class DQNAgent:
         self.min_experiences = max(min_experiences,batch_size)
         self.gamma = gamma
         self.lr = lr
+        self.double = double
+
+        # debug 
+        #print(f"observation_space: {self.observation_space}")
 
         if len(observation_space) == 3:
             if torch.cuda.is_available():
@@ -118,7 +125,10 @@ class DQNAgent:
             dones = dones.to("cuda")
         
         current_Q_values = self.Q(states).gather(1,actions.type(torch.int64))
-        next_max_q = self.target_Q(next_states).detach().max(1)[0].unsqueeze(1)
+        if self.double:
+            next_max_q = self.Q(next_states).detach().max(1)[0].unsqueeze(1)
+        else:
+            next_max_q = self.target_Q(next_states).detach().max(1)[0].unsqueeze(1)
         next_Q_values = ~dones * next_max_q
         target_Q_values = rewards + (self.gamma * next_Q_values)
 
