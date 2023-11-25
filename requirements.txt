@@ -1,6 +1,8 @@
 torch
 torchvision
 tqdm
+ray
+ray[tune]
 matplotlib
 seaborn
 gymnasium
@@ -8,4 +10,6 @@ gymnasium[other]
 gymnasium[classic-control]
 gymnasium[atari]
 gymnasium[accept-rom-license] # atariのrom
+swig # box2d installするのに必要らしい
+gymnasium[box2d]
 minigrid

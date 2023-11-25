@@ -2,61 +2,38 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from modules.models import CNNQNet, ResnetQNet, SimpleQNet
+from modules.models import DecisionTransformer
 from buffer import SimpleReplayBuffer
 
-class DQNAgent:
+class DTAgent:
+    """Decision Transformer Agent
+    """
     def __init__(
             self,
             observation_space: tuple,
             num_actions: int,
             gamma: float=0.99,
-            max_experiences: int = 10000,
-            min_experiences: int = 500,
             batch_size: int = 64,
             lr: float = 3e-4,
         ):
         """
         Args:
+            observation_space (tuple): 状態空間の次元
+            num_actions (int): 行動空間の次元
             gamma (float): 割引率
-            max_experiences (int): リプレイバッファの最大数
-            min_experiences (int): 学習を始めるのに必要な最低限のバッファのサイズ
             batch_size (int): 学習のミニバッチサイズ
             lr (float): 学習率
-        TODO:
-            optim周りのパラメータなど
         """
         self.observation_space = observation_space
         self.num_actions = num_actions
         self.batch_size = batch_size
-        self.max_exoeriences = max_experiences
-        self.min_experiences = max(min_experiences,batch_size)
         self.gamma = gamma
         self.lr = lr
 
         if len(observation_space) == 3:
-            if torch.cuda.is_available():
-                self.Q = CNNQNet(observation_space,num_actions).to("cuda")
-                self.target_Q = CNNQNet(observation_space,num_actions).to("cuda")
-                self.gamma = torch.tensor(gamma).to("cuda")
-            else:
-                self.Q = CNNQNet(observation_space,num_actions)
-                self.target_Q = CNNQNet(observation_space,num_actions)
-            # if torch.cuda.is_available():
-            #     self.Q = ResnetQNet(observation_space,num_actions).to("cuda")
-            #     self.target_Q = ResnetQNet(observation_space,num_actions).to("cuda")
-            #     self.gamma = torch.tensor(gamma).to("cuda")
-            # else:
-            #     self.Q = ResnetQNet(observation_space,num_actions)
-            #     self.target_Q = ResnetQNet(observation_space,num_actions)
+            model = DecisionTransformer()
         elif len(observation_space) == 1:
-            if torch.cuda.is_available():
-                self.Q = SimpleQNet(observation_space,num_actions).to("cuda")
-                self.target_Q = SimpleQNet(observation_space,num_actions).to("cuda")
-                self.gamma = torch.tensor(gamma).to("cuda")
-            else:
-                self.Q = SimpleQNet(observation_space,num_actions)
-                self.target_Q = SimpleQNet(observation_space,num_actions)
+            
         else:
             raise NotImplementedError("observation space must be 1 or 3 dimentional")
         

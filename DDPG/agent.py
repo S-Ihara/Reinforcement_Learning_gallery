@@ -116,6 +116,7 @@ class DDPGAgent:
             states = states.to("cuda")
             rewards = rewards.to("cuda")
             dones = dones.to("cuda")
+            next_states = next_states.to("cuda")
         
         next_actions = self.target_actor(next_states)
         next_qvalues = self.target_critic(next_states,next_actions)
