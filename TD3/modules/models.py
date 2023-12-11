@@ -55,6 +55,7 @@ class CriticeNetwork(nn.Module):
             # 以下kwargs
             hidden_dim (int): 隠れ層の次元数
             activation (str): 活性化関数
+            num_critics (int): criticの数
         """
         super(CriticeNetwork,self).__init__()
         hidden_dim = kwargs.get("hidden_dim",64)
@@ -69,17 +70,27 @@ class CriticeNetwork(nn.Module):
         else:
             raise NotImplementedError(f"observation space: {observation_space} is not supported")
 
-        self.value_head = nn.Sequential(
-            nn.Linear(feature_dim+num_actions,hidden_dim),
-            act_func,
-            nn.Linear(hidden_dim,hidden_dim),
-            act_func,
-            nn.Linear(hidden_dim,1),
-        )
+        # self.value_head = nn.Sequential(
+        #     nn.Linear(feature_dim+num_actions,hidden_dim),
+        #     act_func,
+        #     nn.Linear(hidden_dim,hidden_dim),
+        #     act_func,
+        #     nn.Linear(hidden_dim,1),
+        # )
+        self.value_heads = nn.ModuleList([
+            nn.Sequential(
+                nn.Linear(feature_dim+num_actions,hidden_dim),
+                act_func,
+                nn.Linear(hidden_dim,hidden_dim),
+                act_func,
+                nn.Linear(hidden_dim,1),
+            ) for _ in range(kwargs.get("num_critics",2))
+        ])
 
     def forward(self,s,a):
         s = self.feature_extractor(s)
         x = torch.cat([s,a],axis=1)
-        x = self.value_head(x)
+        #x = self.value_head(x)
+        x = [value_head(x) for value_head in self.value_heads]
         
         return x

@@ -15,5 +15,8 @@ def make_classic_env(env_name: str, **kwargs):
     Note:
         obs_mode='rgb' is not supported yet.
     """
-    env = gym.make(env_name, render_mode='rgb_array')
+    if "Hardcore" in env_name:
+        env = gym.make("BipedalWalker-v3",render_mode='rgb_array', hardcore=True)
+    else:
+        env = gym.make(env_name, render_mode='rgb_array')
     return env

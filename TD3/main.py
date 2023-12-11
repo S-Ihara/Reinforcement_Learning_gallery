@@ -119,12 +119,15 @@ class Trainer:
         if not save_path.exists():
             save_path.mkdir(parents=True)
         sns.set_style("darkgrid")
+
+        # reward
         fig,ax = plt.subplots(1,1,figsize=(10,10))
         ax.plot(self.reward_history)
         ax.set_xlabel("Episode")
         ax.set_ylabel("Reward")
         plt.savefig(save_path/"reward_history.png")
 
+        # loss
         fig,ax = plt.subplots(1,1,figsize=(10,10))
         ax.plot(self.loss_history)
         ax.set_xlabel("Step")

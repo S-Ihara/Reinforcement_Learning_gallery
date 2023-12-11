@@ -2,7 +2,7 @@
 from .classic_gym_env import make_classic_env
 
 classic_env_list = [
-    "Pendulum-v1","BipedalWalker-v3"
+    "Pendulum-v1","BipedalWalker-v3","BipedalWalkerHardcore-v3",
 ]
 
 def create_env(env_name: str, **kwargs):

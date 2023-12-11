@@ -35,6 +35,7 @@ class DDPGAgent:
                 critic_hidden_dim (int): criticの隠れ層の次元数
                 actor_hidden_dim (int): actorの隠れ層の次元数 # これらが設定されてたら優先される
                 activation (str): 活性化関数
+                num_critics (int): criticの数
         TODO:
             optim周りのパラメータなど
         """
@@ -47,7 +48,9 @@ class DDPGAgent:
         self.gamma = gamma
         self.lr = lr
         self.tau = tau
+        self.update_actor_flag = False
         
+        num_critics = kwargs.get("num_critics",2)
         hidden_dim = kwargs.get("hidden_dim",64)
         if "critic_hidden_dim" in kwargs:
             critic_hidden_dim = kwargs.get("critic_hidden_dim")
@@ -57,8 +60,8 @@ class DDPGAgent:
             actor_hidden_dim = hidden_dim
         activation = kwargs.get("activation","ReLU")
 
-        self.critic = CriticeNetwork(observation_space,num_actions,hidden_dim=critic_hidden_dim,activation=activation)
-        self.target_critic = CriticeNetwork(observation_space,num_actions,hidden_dim=critic_hidden_dim,activation=activation)
+        self.critic = CriticeNetwork(observation_space,num_actions,hidden_dim=critic_hidden_dim,activation=activation,num_critics=num_critics)
+        self.target_critic = CriticeNetwork(observation_space,num_actions,hidden_dim=critic_hidden_dim,activation=activation,num_critics=num_critics)
         self.actor = ActorNetwork(observation_space,num_actions,action_range=action_range,hidden_dim=actor_hidden_dim,activation=activation)
         self.target_actor = ActorNetwork(observation_space,num_actions,action_range=action_range,hidden_dim=actor_hidden_dim,activation=activation)
         if torch.cuda.is_available():
@@ -90,7 +93,7 @@ class DDPGAgent:
             state = torch.tensor(state,dtype=torch.float).unsqueeze(0)
         action = self.actor(state)[0]
 
-        if noise is not 0.:
+        if noise != 0.:
             if torch.cuda.is_available():
                 action += torch.normal(0,noise,size=action.shape,device="cuda")
             else:
@@ -118,27 +121,46 @@ class DDPGAgent:
             dones = dones.to("cuda")
             next_states = next_states.to("cuda")
         
-        next_actions = self.target_actor(next_states)
-        next_qvalues = self.target_critic(next_states,next_actions)
-
+        with torch.no_grad():
+            # clip noise
+            clipped_noise = torch.clamp(torch.normal(0,0.2,size=actions.shape,device=actions.device),-0.5,0.5)
+            next_actions = self.target_actor(next_states) + clipped_noise
+            next_qvalues_list = self.target_critic(next_states,next_actions)
+            next_qvalues = torch.min(*next_qvalues_list)
+        #import pdb; pdb.set_trace()
+        
         # update critic network
         next_qvalues = ~dones * next_qvalues
         Q_targets = rewards + self.gamma*next_qvalues
-        Q_values = self.critic(states,actions)
+        #Q_values = self.critic(states,actions)
 
-        critic_loss = self.loss_fn(Q_targets,Q_values)
+        Q_values_list = self.critic(states,actions)
+        Q_losses = []
+        for Q_values in Q_values_list:
+            Q_losses.append(self.loss_fn(Q_targets,Q_values))
+        #critic_loss = torch.mean(torch.stack(Q_losses))
+        critic_loss = torch.sum(torch.stack(Q_losses))
+
+        #critic_loss = self.loss_fn(Q_targets,Q_values)
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.critic_optimizer.step()
 
         # update actor network
-        J = -1 * torch.mean(self.critic(states,self.actor(states)))
+        if self.update_actor_flag:
+            Q = self.critic(states,self.actor(states))[0] # これは最小値とかではなく0番目のcriticのQ値とかでいいらしい ほんとか？
+            J = -1 * torch.mean(Q)
+            #J = -1 * torch.mean(self.critic(states,self.actor(states)))
 
-        self.actor_optimizer.zero_grad()
-        J.backward()
-        self.actor_optimizer.step()
+            self.actor_optimizer.zero_grad()
+            J.backward()
+            self.actor_optimizer.step()
+            actor_loss = J.detach().cpu().item()
+        else:
+            actor_loss = 0
+        self.update_actor_flag = not self.update_actor_flag
 
-        return {"critic_loss": critic_loss.item(),"actor_loss": J.item()}
+        return {"critic_loss": critic_loss.detach().cpu().item(),"actor_loss": actor_loss}
 
     def update_target(self):
         """soft-target update
