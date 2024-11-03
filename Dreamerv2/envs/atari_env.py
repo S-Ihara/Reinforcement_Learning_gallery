@@ -1,5 +1,4 @@
 import numpy as np
-from torchvision.transforms import v2 
 import gymnasium as gym
 from gymnasium import ObservationWrapper
 from gymnasium.wrappers import AtariPreprocessing
@@ -33,12 +32,6 @@ class TorchImgshapeWrapper(ObservationWrapper):
             shape=(env.observation_space.shape[2],env.observation_space.shape[0],env.observation_space.shape[1]),
             dtype=np.float32,
         )
-
-        # self.transform = v2.Compose([
-        #     v2.ToPILImage(),
-        #     v2.Resize((84,84)),
-        #     v2.ToTensor()
-        # ])
     
     def observation(self,observation):
         observation = observation.astype('float32') / 255.0

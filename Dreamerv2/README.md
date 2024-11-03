@@ -1,0 +1,21 @@
+## memo
+- トップダウンに実装を書いてみるやつやってみましょう
+    - 一回ほかやjupyter notebookである程度の実装を書いている前提がないと何をするべきかとか、一個一個で何をしているのかとかが見えにくいのでいきなりはやっぱ大変なんですかねぇ
+
+- notation
+    - latent_dim 潜在表現の次元数
+        - image_feature -> latent_feature
+        - でのlantetdim部分での次元数？
+    - n_atoms 分散表現の次元数
+    - hidden_dim 隠れ状態の次元数
+        - rnnでの次元数
+    - prior
+        - paperでのTransition Predictor部分
+        - Transition Predictor(z_t_hat | h_t)
+    - post
+        - paperでのRepresentation model部分
+        - Representation model(z_t_hat | h_t, x_t)
+    - feature
+        - dim = hidden_dim + latent_dim*n_atoms
+        - cat(h,z)
+            - z,hではなくh,zなので注意
