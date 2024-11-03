@@ -76,10 +76,6 @@ class Trainer:
                 next_state,reward,terminated,truncated,info = env.step(action) 
                 if reward_clip:
                     reward = np.clip(reward,-1,1)
-                #print("debug!")
-                #print(f"state: {state}, reward: {reward}, next_state: {next_state}, terminated: {terminated}, truncated: {truncated}")
-                #if terminated: # CartPole
-                #    reward = -1
                 frames.append(next_state)
                 next_state = np.stack(frames,axis=1).reshape(-1,*next_state.shape[1:3])
                 total_reward += reward
@@ -119,13 +115,13 @@ class Trainer:
         ax.plot(self.reward_history)
         ax.set_xlabel("Episode")
         ax.set_ylabel("Reward")
-        plt.savefig(save_path/"reward_history.png")
+        fig.savefig(save_path/"reward_history.png")
 
         fig,ax = plt.subplots(1,1,figsize=(10,10))
         ax.plot(self.loss_history)
         ax.set_xlabel("Step")
         ax.set_ylabel("Loss")
-        plt.savefig(save_path/"loss_history.png")
+        fig.savefig(save_path/"loss_history.png")
         
 
     def test(self,num_episodes: int = 1):

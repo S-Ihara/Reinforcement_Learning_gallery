@@ -122,8 +122,6 @@ class DQNAgent:
         next_Q_values = ~dones * next_max_q
         target_Q_values = rewards + (self.gamma * next_Q_values)
 
-        #loss = (target_Q_values - current_Q_values) ** 2
-        #loss = torch.mean(loss)
         loss = self.loss_fn(current_Q_values,target_Q_values)
         loss = torch.clamp(loss,0,3) # loss clipping
 
