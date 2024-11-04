@@ -53,7 +53,7 @@ class Acrobot:
 
 @dataclass
 class Atari:
-    env_name: str = "VideoPinball-v4"
+    env_name: str = "ALE/Pacman-v5"
     frame_stack: int = 3
     gray: bool = True
     gamma: float = 0.99
@@ -63,8 +63,8 @@ class Atari:
     target_update_epochs: int|None = None
     batch_size: int = 512
     min_experiences: int = 2048
-    memory_size: int = 300000
-    num_episodes: int = 500
+    memory_size: int = 200000
+    num_episodes: int = 3000
     seed: int = 42
     reward_clip: bool = True
 

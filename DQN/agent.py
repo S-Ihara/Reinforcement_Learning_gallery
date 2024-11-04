@@ -91,7 +91,12 @@ class DQNAgent:
             action = np.random.choice(self.num_actions)
         else:
             with torch.no_grad():
-                state = torch.tensor(state,dtype=torch.float).unsqueeze(0)
+                if state.dtype == np.float32:
+                    state = torch.tensor(state,dtype=torch.float).unsqueeze(0)
+                elif state.dtype == np.uint8:
+                    state = state / 255.0
+                    state = torch.tensor(state,dtype=torch.float).unsqueeze(0)
+                #state = torch.tensor(state,dtype=torch.float).unsqueeze(0)
                 action = torch.argmax(self.Q(state)).item()
         return action
 

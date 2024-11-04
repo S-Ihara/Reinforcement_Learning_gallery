@@ -6,6 +6,7 @@ import argparse
 from collections import deque
 from typing import Optional
 from pathlib import Path
+from copy import deepcopy
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -79,6 +80,9 @@ class Trainer:
                 frames.append(next_state)
                 next_state = np.stack(frames,axis=1).reshape(-1,*next_state.shape[1:3])
                 total_reward += reward
+
+                # 経験を貯める
+                # TODO: typeingを調べる　メモリがかつかつなので
                 agent.store_experience(state,action,reward,next_state,terminated)
                 if total_steps % q_update_steps == 0:
                     loss = agent.update_networks()
@@ -100,6 +104,12 @@ class Trainer:
             else:
                 episode_losses = np.mean(episode_losses)
             print(f"Episode: {episode}, Total_Step: {total_steps}, Step: {step}, Reward: {total_reward}, loss_avg: {episode_losses}")
+
+            if episode % 50 == 0:
+                agent.save_model()
+                self.plot_history()
+                self.test(num_episodes=3,frame_stack=frame_stack)
+
         agent.save_model()
         print("Training finished")
     
@@ -124,22 +134,28 @@ class Trainer:
         fig.savefig(save_path/"loss_history.png")
         
 
-    def test(self,num_episodes: int = 1):
+    def test(self,num_episodes: int = 1, frame_stack: int = 1):
         """テストを行うメソッド
         Args:
             num_episodes int: テストするエピソード数
         """
-        env = self.env
+        print("Testing...")
+        env = deepcopy(self.env)
+        env = RecordVideo(env,video_folder="video",episode_trigger=lambda x: True)
         agent = self.agent
         total_steps = 0
         for episode in range(1,num_episodes+1):
             state,_ = env.reset()
+            frames = deque([state]*frame_stack,maxlen=frame_stack)
+            state = np.stack(frames,axis=1).reshape(-1,*state.shape[1:3])
             total_reward = 0
             step = 0
             done = False
             while not done:
                 action = agent.get_action(state,0)
                 next_state,reward,terminated,truncated,info = env.step(action) 
+                frames.append(next_state)
+                next_state = np.stack(frames,axis=1).reshape(-1,*next_state.shape[1:3])
                 total_reward += reward
                 state = next_state
                 step += 1
@@ -147,6 +163,8 @@ class Trainer:
                     done = True
                     total_steps += step
             print(f"episode: {episode}, step: {step}, reward: {total_reward}")
+        env.close()
+        print("Test finished")
 
 
 if __name__ == "__main__":
@@ -199,6 +217,7 @@ if __name__ == "__main__":
         trainer.online_train(
             num_episodes=config.num_episodes,
             q_update_steps=config.q_update_steps,
+            frame_stack=config.frame_stack,
             target_update_steps=config.target_update_steps,
             target_update_epochs=config.target_update_epochs,
             reward_clip=reward_clip,

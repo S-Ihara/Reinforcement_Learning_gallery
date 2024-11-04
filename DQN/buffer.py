@@ -15,11 +15,11 @@ class SimpleReplayBuffer(object):
             メモリをかなり食うので画像などを貯めておくならdtypeをuint8などにする
         """
         self.size        = size
-        self.states      = np.empty((self.size,*state_shape),dtype=np.float32)
-        self.actions     = np.empty((self.size,action_shape),dtype=np.float32)
-        self.rewards     = np.empty((self.size,1),dtype=np.float32)
-        self.next_states = np.empty((self.size,*state_shape),dtype=np.float32)
-        self.dones       = np.empty((self.size,1),dtype=np.float32)
+        self.states      = np.zeros((self.size,*state_shape),dtype=np.uint8)
+        self.actions     = np.zeros((self.size,action_shape),dtype=np.float32)
+        self.rewards     = np.zeros((self.size,1),dtype=np.float32)
+        self.next_states = np.zeros((self.size,*state_shape),dtype=np.uint8)
+        self.dones       = np.zeros((self.size,1),dtype=np.float32)
         self.point       = 0
         self.full        = False
 
@@ -35,7 +35,6 @@ class SimpleReplayBuffer(object):
             next_state (np.ndarray): 次の状態
             done (bool): 終了判定
         """
-        #state,action,reward,next_state,done = trajectory
         np.copyto(self.states[self.point],state)
         np.copyto(self.actions[self.point],action)
         np.copyto(self.rewards[self.point],reward)
@@ -61,5 +60,8 @@ class SimpleReplayBuffer(object):
         rewards = self.rewards[idexs]
         next_states = self.next_states[idexs]
         dones = self.dones[idexs]
+
+        states = states.astype(np.float32) / 255.0
+        next_states = next_states.astype(np.float32) / 255.0
 
         return states, actions, rewards, next_states, dones

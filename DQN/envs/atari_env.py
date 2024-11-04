@@ -3,6 +3,9 @@ from torchvision.transforms import v2
 import gymnasium as gym
 from gymnasium import ObservationWrapper
 from gymnasium.wrappers import AtariPreprocessing
+import ale_py
+
+gym.register_envs(ale_py)
 
 
 def make_atari_env(env_name: str , **kwargs):
@@ -41,5 +44,5 @@ class TorchImgshapeWrapper(ObservationWrapper):
         # ])
     
     def observation(self,observation):
-        observation = observation.astype('float32') / 255.0
+        #observation = observation.astype('float32') / 255.0
         return observation.transpose(2,0,1)
