@@ -14,7 +14,7 @@ def make_atari_env(env_name: str , **kwargs):
     size = kwargs.get("size", 84)
     gray = kwargs.get("gray", True)
 
-    env = gym.make(env_name,render_mode='rgb_array')
+    env = gym.make(env_name,render_mode='rgb_array', frameskip=3)
     env = AtariPreprocessing(env,frame_skip=1 ,screen_size=size, grayscale_obs=gray, grayscale_newaxis=gray)
     env = TorchImgshapeWrapper(env)
     return env
@@ -30,9 +30,9 @@ class TorchImgshapeWrapper(ObservationWrapper):
             low=0,
             high=1,
             shape=(env.observation_space.shape[2],env.observation_space.shape[0],env.observation_space.shape[1]),
-            dtype=np.float32,
+            dtype=np.uint8,
         )
     
     def observation(self,observation):
-        observation = observation.astype('float32') / 255.0
+        #observation = observation.astype('float32') / 255.0
         return observation.transpose(2,0,1)

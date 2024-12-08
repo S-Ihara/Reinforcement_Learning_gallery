@@ -23,6 +23,7 @@ COLLECT_INTERVALS = 5
 SEQ_LEN = 50
 BATCH_SIZE = 512
 TRAIN_STEPS = 10000
+MEMORY_SIZE = 100000
 
 class Trainer:
     def __init__(self, env, agent):
@@ -37,7 +38,7 @@ class Trainer:
         self.train_steps = TRAIN_STEPS
         self.collect_intervals = COLLECT_INTERVALS
 
-        self.buffer = ReplayBuffer(capacity=100000, state_shape=env.observation_space.shape, action_size=env.action_space.n, seq_len=SEQ_LEN, batch_size=BATCH_SIZE)
+        self.buffer = ReplayBuffer(capacity=MEMORY_SIZE, state_shape=env.observation_space.shape, action_size=env.action_space.n, seq_len=SEQ_LEN, batch_size=BATCH_SIZE)
 
         self.log_dir = Path("./logs")
         self.log_dir.mkdir(exist_ok=True)
@@ -47,10 +48,6 @@ class Trainer:
         """
         print("start training")
         agent = self.agent
-
-        # ログディレクトリ
-        # log_dir = Path("./logs") # とりあえずディレクトリ名はlogsにしておく
-        # log_dir.mkdir(exist_ok=True)
 
         # initial collection of experience
         for _ in range(INIT_EPISODE):

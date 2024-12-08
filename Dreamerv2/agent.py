@@ -57,7 +57,12 @@ class DreamerAgent:
         returns:
             int | dict[str,Any]: 行動などを返す
         """
-        state = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(self.device)
+        if state.dtype == np.float32:
+            state = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(self.device)
+        elif state.dtype == np.uint8:
+            state = state / 255.0
+            state = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(self.device)
+        #state = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(self.device)
         embed = self.world_model.encoder(state)
         z,_ = self.world_model.rssm.sample_z_post(self.hidden_state, embed)
         z = z.view(z.size(0), -1)

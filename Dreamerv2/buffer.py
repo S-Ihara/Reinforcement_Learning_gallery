@@ -23,7 +23,7 @@ class ReplayBuffer:
         self.point = 0
         self.full = False
 
-        self.states = np.empty((self.capacity, *self.state_shape), dtype=np.float32)
+        self.states = np.empty((self.capacity, *self.state_shape), dtype=np.uint8)
         self.action = np.empty((self.capacity, self.action_size), dtype=np.float32)
         self.reward = np.empty((self.capacity, 1), dtype=np.float32)
         self.terminal = np.empty((self.capacity, 1), dtype=bool)
@@ -100,6 +100,8 @@ class ReplayBuffer:
         l = self.seq_len
         states,actions,rewards,terminals = self._retrieve_batch(np.asarray([self._sample_idx(l) for _ in range(n)]), n, l)
         states,actions,rewards,terminals = self._shift_sequences(states, actions, rewards, terminals)
+
+        states = states.astype(np.float32) / 255.0
 
         return states, actions, rewards, terminals
 

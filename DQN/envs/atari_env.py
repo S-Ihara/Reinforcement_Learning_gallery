@@ -34,7 +34,7 @@ class TorchImgshapeWrapper(ObservationWrapper):
             low=0,
             high=1,
             shape=(env.observation_space.shape[2],env.observation_space.shape[0],env.observation_space.shape[1]),
-            dtype=np.float32,
+            dtype=np.uint8,
         )
 
         # self.transform = v2.Compose([
