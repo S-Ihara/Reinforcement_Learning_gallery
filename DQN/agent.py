@@ -2,7 +2,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from modules.models import CNNQNet, ResnetQNet, SimpleQNet
+from modules.models import CNNQNet, ResnetQNet, SimpleQNet, VitQNet
 from buffer import SimpleReplayBuffer
 
 class DQNAgent:
@@ -36,8 +36,12 @@ class DQNAgent:
 
         if len(observation_space) == 3:
             if torch.cuda.is_available():
-                self.Q = CNNQNet(observation_space,num_actions).to("cuda")
-                self.target_Q = CNNQNet(observation_space,num_actions).to("cuda")
+                # self.Q = CNNQNet(observation_space,num_actions).to("cuda")
+                # self.target_Q = CNNQNet(observation_space,num_actions).to("cuda")
+                # self.gamma = torch.tensor(gamma).to("cuda")
+
+                self.Q = VitQNet(observation_space,num_actions).to("cuda")
+                self.target_Q = VitQNet(observation_space,num_actions).to("cuda")
                 self.gamma = torch.tensor(gamma).to("cuda")
             else:
                 self.Q = CNNQNet(observation_space,num_actions)
@@ -65,7 +69,8 @@ class DQNAgent:
             action_shape=1,
             size=max_experiences,
         )
-        self.optimizer = torch.optim.Adam(self.Q.parameters(),lr=lr,betas=(0.9,0.95))
+        #self.optimizer = torch.optim.Adam(self.Q.parameters(),lr=lr,betas=(0.9,0.95))
+        self.optimizer = torch.optim.AdamW(self.Q.parameters(),lr=lr, betas=(0.9,0.999), eps=1e-08, weight_decay=0.01)
         #self.loss_fn = torch.nn.MSELoss()
         self.loss_fn = torch.nn.HuberLoss()
 

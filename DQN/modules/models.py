@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torchvision
 
+from .VisionTransformer import VisionTransformer
+
 devices = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class SimpleQNet(torch.nn.Module):
@@ -94,3 +96,28 @@ class ResnetQNet(torch.nn.Module):
         x = x.view(x.size(0),-1)
         x = self.head(x)
         return x
+    
+class VitQNet(torch.nn.Module):
+    def __init__(self,observation_space: tuple[int,int,int],num_actions: int):
+        """観測が画像で行動が離散値のQ関数
+        Args:
+            observation_space (tuple[int,int,int]): 入力の次元数 (channel,height,width)
+            num_actions (int): 行動の種類数
+        """
+        super(VitQNet,self).__init__()
+        assert observation_space[1] == observation_space[2], "画像は正方形にしか対応していません"
+        self.feature_extractor = VisionTransformer(
+            image_size=observation_space[1],
+            patch_size=8,
+            in_channel=observation_space[0],
+            dim=128,
+            hidden_dim=128*4,
+            num_heads=8,
+            num_blocks=4,
+            num_classes=num_actions,
+        )
+
+    def forward(self,x):
+        x = x.to(devices)
+        x = self.feature_extractor(x)
+        return x    

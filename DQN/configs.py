@@ -86,16 +86,16 @@ class Breakout:
 
 @dataclass
 class MiniGridEmpty:
-    env_name: str = "MiniGrid-Empty-Random-6x6-v0"
+    env_name: str = "MiniGrid-Empty-8x8-v0" # "MiniGrid-Empty-Random-6x6-v0"
     tile_size: int = 8
     frame_stack: int = 1
-    gamma: float = 0.99
+    gamma: float = 0.95
     lr: float = 3e-4
     q_update_steps: int = 1
     target_update_steps: int = 500
     target_update_epochs: int|None = None
-    batch_size: int = 16
+    batch_size: int = 128
     min_experiences: int = 512
-    memory_size: int = 30000
-    num_episodes: int = 3000
+    memory_size: int = 100000
+    num_episodes: int = 5000
     seed: int = 42

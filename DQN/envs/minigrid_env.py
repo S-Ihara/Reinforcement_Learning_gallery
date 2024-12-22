@@ -43,9 +43,8 @@ class OnlyImageReturnWrapper(ObservationWrapper):
     
     def observation(self,observation):
         observation = observation["image"]
-        observation = observation.astype(np.float32) / 255.0
+        #observation = observation.astype(np.float32) / 255.0
         return observation.transpose(2,0,1)
-        return observation
 
 if __name__ == "__main__":
     # テスト
