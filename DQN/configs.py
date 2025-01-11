@@ -53,7 +53,7 @@ class Acrobot:
 
 @dataclass
 class Atari:
-    env_name: str = "ALE/Pacman-v5"
+    env_name: str = "SpaceInvaders-v4"
     frame_stack: int = 3
     gray: bool = True
     gamma: float = 0.99

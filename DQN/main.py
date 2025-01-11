@@ -7,6 +7,7 @@ from collections import deque
 from typing import Optional
 from pathlib import Path
 from copy import deepcopy
+from datetime import datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -23,16 +24,41 @@ class Trainer:
     """
     訓練を制御するクラス
     """
-    def __init__(self,env,agent):
+    def __init__(self,env,agent, log_mode="local"):
         """
         Args:
             env: 自作ラッパーによる環境
             agent: エージェント
+            log_mode(str): ログの方法 ["local", "clearml"]
         """
         self.env = env
         self.agent = agent
         self.reward_history = []
         self.loss_history = []
+
+        self.log_mode = "local"
+        if log_mode == "clearml":
+            try:
+                from clearml import Task
+            except ImportError:
+                print("clearml is not installed. Please install it.")
+                raise
+            self.log_mode = "clearml"
+            now = datetime.now().strftime('%Y%m%d-%H%M%S')
+            project_name = "test_rl"
+            task_name = "test"+"_"+now
+            tag = "RL"
+            comment = """
+                RL test
+            """
+            self.task = Task.init(project_name=project_name, task_name=task_name)
+            self.task.add_tags(tag)
+            self.task.set_comment(comment)
+            self.clearml_logger = self.task.get_logger()
+
+    def save_log(self,config: dict):
+        if self.log_mode == "clearml":
+            self.task.connect(config, name="config")
 
     def online_train(
             self,
@@ -105,10 +131,17 @@ class Trainer:
                 episode_losses = np.mean(episode_losses)
             print(f"Episode: {episode}, Total_Step: {total_steps}, Step: {step}, Reward: {total_reward}, loss_avg: {episode_losses}")
 
+            if self.log_mode == "clearml":
+                self.clearml_logger.report_scalar(title="reward", series="rewards", value=total_reward, iteration=episode)
+                self.clearml_logger.report_scalar(title="episode_loss",series="episode_loss", value=episode_losses, iteration=episode)
+
             if episode % 50 == 0:
                 agent.save_model()
                 self.plot_history()
                 self.test(num_episodes=3,frame_stack=frame_stack)
+
+                if self.log_mode == "clearml":
+                    self.task.upload_artifact(name=f"test_record_directory_episode_{episode}", artifact_object="video/*.mp4")
 
         agent.save_model()
         print("Training finished")
@@ -213,7 +246,8 @@ if __name__ == "__main__":
             min_experiences=config.min_experiences,
             max_experiences=config.memory_size,
         )
-        trainer = Trainer(env,agent)
+        trainer = Trainer(env,agent,log_mode="clearml")
+        trainer.save_log(config=config.__dict__)
         trainer.online_train(
             num_episodes=config.num_episodes,
             q_update_steps=config.q_update_steps,
